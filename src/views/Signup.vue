@@ -15,7 +15,7 @@
 
         <div class="mt-8">
           <div class="mt-6">
-            <form action="#" method="POST" class="space-y-6">
+            <form class="space-y-6" @submit.prevent="submit">
               <div>
                 <label
                   for="name"
@@ -31,6 +31,7 @@
                     autocomplete="name"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    v-model="form.name"
                   />
                 </div>
               </div>
@@ -50,6 +51,7 @@
                     autocomplete="email"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    v-model="form.email"
                   />
                 </div>
               </div>
@@ -69,6 +71,7 @@
                     autocomplete="current-password"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    v-model="form.password"
                   />
                 </div>
               </div>
@@ -87,9 +90,14 @@
                     type="password"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    v-model="passwordVerify"
                   />
                 </div>
               </div>
+
+              <p class="text-red-500" v-text="errorBag.error">
+
+              </p>
 
               <div class="flex items-center justify-start">
                 <div class="text-sm">
@@ -126,7 +134,62 @@
 </template>
 
 <script>
+import { reactive, ref, watch } from "vue";
+import { useRouter } from "vue-router";
+
 export default {
-  setup() {},
+  setup() {
+    const form = reactive({
+      name: "",
+      email: "",
+      password: "",
+    });
+
+    const errorBag = reactive({
+      name: "",
+      email: "",
+      password: "",
+      error: ""
+    });
+
+    const passwordVerify = ref("");
+
+    watch(form, (newValue, oldValue) => {
+      console.log(newValue);
+    });
+
+    const router = useRouter();
+
+    const submit = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        
+        const data = await res.json();
+
+        if (data.error) {
+          console.log(data.error);
+          errorBag.error = 'Error en el registro';
+          return;
+        }
+
+        localStorage.setItem('token', data.body.token);
+
+        await router.push('/t');
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    return {
+      form,
+      submit,
+      passwordVerify,
+      errorBag
+    };
+  },
 };
 </script>

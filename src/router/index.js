@@ -19,6 +19,11 @@ const routes = [
     name: "Inbox",
     component: Inbox,
   },
+  {
+    path: "/t/",
+    name: "Inbox",
+    component: Inbox,
+  },
 ];
 
 const router = createRouter({
