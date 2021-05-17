@@ -17,7 +17,7 @@
 
         <div class="mt-8">
           <div class="mt-6">
-            <form action="#" method="POST" class="space-y-6">
+            <form @submit.prevent="submit" class="space-y-6">
               <div>
                 <label
                   for="email"
@@ -33,6 +33,7 @@
                     autocomplete="email"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    v-model="form.email"
                   />
                 </div>
               </div>
@@ -49,12 +50,15 @@
                     id="password"
                     name="password"
                     type="password"
+                    v-model="form.password"
                     autocomplete="current-password"
                     required
                     class="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                   />
                 </div>
               </div>
+
+              <p class="text-red-500" v-text="errorBag.error"></p>
 
               <div class="flex items-center justify-end">
                 <div class="text-sm">
@@ -91,7 +95,54 @@
 </template>
 
 <script>
+import { reactive } from "@vue/reactivity";
+import { useRouter } from "vue-router";
 export default {
-  setup() {},
+  setup() {
+    const router = useRouter();
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      router.push("/t");
+    }
+
+    const form = reactive({
+      email: "",
+      password: "",
+    });
+
+    const errorBag = reactive({
+      email: "",
+      password: "",
+      error: "",
+    });
+
+    const submit = async () => {
+      try {
+        const res = await fetch("http://localhost:4000/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          console.log(data.error);
+          errorBag.error = "Error en el registro";
+          return;
+        }
+
+        localStorage.setItem("token", data.body.token);
+        await router.push('/t');
+      } catch (error) {}
+    };
+
+    return {
+      form,
+      errorBag,
+      submit
+    };
+  },
 };
 </script>

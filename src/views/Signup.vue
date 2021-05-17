@@ -139,6 +139,13 @@ import { useRouter } from "vue-router";
 
 export default {
   setup() {
+    const router = useRouter();
+    const token = localStorage.getItem("token");
+
+    if(token) {
+      router.push('/t')
+    }
+
     const form = reactive({
       name: "",
       email: "",
@@ -157,8 +164,6 @@ export default {
     watch(form, (newValue, oldValue) => {
       console.log(newValue);
     });
-
-    const router = useRouter();
 
     const submit = async () => {
       try {

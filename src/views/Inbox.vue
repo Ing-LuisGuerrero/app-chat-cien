@@ -19,11 +19,17 @@
             </h2>
           </div>
           <div class="hidden lg:flex">
-            <button
-              class="flex items-center justify-center hover:bg-gray-200 rounded-full p-2"
-            >
-              <DotsHorizontalIcon class="h-5 w-5" />
-            </button>
+            <div class="relative">
+              <button
+                @click="menu = !menu"
+                class="flex items-center justify-center hover:bg-gray-200 rounded-full p-2 ring-0 ring-transparent focus:outline-none"
+              >
+                <DotsHorizontalIcon class="h-5 w-5" r/>
+              </button>
+              <div v-show="menu" class="w-32 absolute bg-white border border-black rounded">
+                <button @click="logout" class="w-full rounded hover:bg-gray-100 py-1 text-center text-sm border-none"> Logout </button>
+              </div>
+            </div>
             <button
               class="flex items-center justify-center hover:bg-gray-200 rounded-full p-2 ml-1"
             >
@@ -45,8 +51,6 @@
               </div>
               <input
                 type="text"
-                name="email"
-                id="email"
                 class="pl-10 w-full h-full rounded-lg bg-transparent border-none"
                 placeholder="Search in chats"
               />
@@ -149,6 +153,8 @@ import {
 } from "@heroicons/vue/solid";
 import { PencilAltIcon, SearchIcon } from "@heroicons/vue/outline";
 import Chat from "../components/Chat.vue";
+import {useRouter} from 'vue-router';
+import { ref } from '@vue/reactivity';
 
 export default {
   components: {
@@ -160,5 +166,27 @@ export default {
     PhotographIcon,
     PaperAirplaneIcon,
   },
+  setup() {
+    const token = localStorage.getItem("token");
+    const router = useRouter();
+    const menu = ref(false);
+
+    const logout = async () => {
+      localStorage.removeItem('token');
+      await router.push('login');
+    }
+
+    if(!token) {
+      router.push('/login')
+    }
+    console.log(token)
+
+    return {
+      menu,
+      logout,
+    }
+  }
+
+ 
 };
 </script>
