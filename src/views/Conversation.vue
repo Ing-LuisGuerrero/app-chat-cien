@@ -17,8 +17,10 @@
       </button>
     </div>
   </div>
-  <div class="flex-1 flex flex-col">
-    <ul class="flex-1 flex flex-col-reverse pl-1 pr-6 pb-1">
+  <div class="flex-1 flex flex-col min-h-0 mt-3">
+    <ul
+      class="flex-1 h-full flex flex-col-reverse pl-1 pr-6 pb-1 overflow-scroll"
+    >
       <!-- Display messages here -->
       <Message
         v-for="message in messages"
@@ -26,7 +28,7 @@
         :didISendIt="didISendIt(message)"
       />
     </ul>
-    <div class="flex items-center py-2 px-3 w-full">
+    <div class="flex items-center h-min py-2 px-3 w-full flex-shrink-0">
       <button
         class="hover:bg-gray-100 rounded-full p-2 flex justify-center items-center"
       >

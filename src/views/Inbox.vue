@@ -77,7 +77,7 @@
         </div>
       </div>
     </div>
-    <div class="flex-1 flex flex-col w-full">
+    <div class="flex-1 flex flex-col w-full h-screen">
       <router-view></router-view>
     </div>
   </div>
