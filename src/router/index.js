@@ -2,6 +2,8 @@ import { createRouter, createWebHistory } from "vue-router";
 import Login from "../views/Login.vue";
 import Inbox from "../views/Inbox.vue";
 import Signup from "../views/Signup.vue";
+import Conversation from "../views/Conversation.vue";
+import NewChat from "../views/NewChat.vue";
 
 const routes = [
   {
@@ -15,14 +17,21 @@ const routes = [
     component: Signup,
   },
   {
-    path: "/t/:id",
+    path: "/t",
     name: "Inbox",
     component: Inbox,
-  },
-  {
-    path: "/t/",
-    name: "Inbox",
-    component: Inbox,
+    children: [
+      {
+        name: "Chat",
+        path: ":id",
+        component: Conversation,
+      },
+      {
+        name: "NewChat",
+        path: "new",
+        component: NewChat,
+      },
+    ],
   },
 ];
 

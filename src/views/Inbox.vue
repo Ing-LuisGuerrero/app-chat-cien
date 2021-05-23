@@ -24,17 +24,26 @@
                 @click="menu = !menu"
                 class="flex items-center justify-center hover:bg-gray-200 rounded-full p-2 ring-0 ring-transparent focus:outline-none"
               >
-                <DotsHorizontalIcon class="h-5 w-5" r/>
+                <DotsHorizontalIcon class="h-5 w-5" r />
               </button>
-              <div v-show="menu" class="w-32 absolute bg-white border border-black rounded">
-                <button @click="logout" class="w-full rounded hover:bg-gray-100 py-1 text-center text-sm border-none"> Logout </button>
+              <div
+                v-show="menu"
+                class="w-32 absolute bg-white border border-black rounded"
+              >
+                <button
+                  @click="logout"
+                  class="w-full rounded hover:bg-gray-100 py-1 text-center text-sm border-none"
+                >
+                  Logout
+                </button>
               </div>
             </div>
-            <button
+            <router-link
+              :to="{ name: 'NewChat' }"
               class="flex items-center justify-center hover:bg-gray-200 rounded-full p-2 ml-1"
             >
               <PencilAltIcon class="h-5 w-5" />
-            </button>
+            </router-link>
           </div>
         </div>
         <div class="p-4 shadow-sm">
@@ -60,86 +69,16 @@
         <div class="overflow-hidden h-full">
           <ul class="flex min-h-0 max-h-full flex-col overflow-y-auto">
             <Chat
-              v-for="i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]"
+              v-for="chat in chats"
+              :username="getUsername(chat)"
+              :id="chat._id"
             />
           </ul>
         </div>
       </div>
     </div>
     <div class="flex-1 flex flex-col w-full">
-      <div
-        class="w-full h-16 border-b border-gray-300 flex items-center pl-3 pr-4 py-2"
-      >
-        <img
-          class="flex-grow-0 flex-shrink-0 rounded-full h-10 w-10 object-cover"
-          src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-        />
-        <div class="ml-3 flex-1 h-full flex flex-col justify-center">
-          <p class="text-base font-bold">Someone Unknown</p>
-          <p class="text-xs text-gray-500">Activo hace 38 min</p>
-        </div>
-        <!-- Actions -->
-        <div class="flex-shrink-0 flex-grow-0">
-          <button class="h-auto w-auto rounded-full p-1.5 hover:bg-gray-100">
-            <InformationCircleIcon class="h-6 w-6 text-blue-500" />
-          </button>
-        </div>
-      </div>
-      <div class="flex-1 flex flex-col">
-        <ul class="flex-1 flex flex-col-reverse pl-1 pr-6 pb-1">
-          <li class="flex">
-            <div class="ml-3 flex justify-end">
-              <p
-                class="rounded-xl bg-[#0099ff] px-4 py-2 lg:max-w-[70%] text-sm text-white"
-              >
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
-                Reiciendis, magnam necessitatibus mollitia velit alias nobis
-                illo ea, dicta ipsa aliquam, adipisci saepe labore accusamus?
-                Doloremque sunt facilis excepturi labore eligendi.
-              </p>
-            </div>
-          </li>
-          <li class="flex mb-2">
-            <div class="flex-shrink-0 self-end">
-              <img
-                class="flex-grow-0 flex-shrink-0 rounded-full h-7 w-7 object-cover"
-                src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-              />
-            </div>
-            <div class="ml-3">
-              <p
-                class="rounded-xl bg-gray-200 px-4 py-2 lg:max-w-[70%] text-sm"
-              >
-                Lorem ipsum dolor sit amet consectetur, adipisicing elit.
-                Reiciendis, magnam necessitatibus mollitia velit alias nobis
-                illo ea, dicta ipsa aliquam, adipisci saepe labore accusamus?
-                Doloremque sunt facilis excepturi labore eligendi.
-              </p>
-            </div>
-          </li>
-        </ul>
-        <div class="flex items-center py-2 px-3 w-full">
-          <button
-            class="hover:bg-gray-100 rounded-full p-2 flex justify-center items-center"
-          >
-            <PhotographIcon class="h-5 w-5 text-blue-500 block" />
-          </button>
-          <label class="ml-3 flex-1" for="">
-            <input
-              type="text"
-              placeholder="Aa"
-              class="w-full rounded-full border-none outline-none py-2 px-3 bg-gray-100"
-            />
-          </label>
-          <button
-            class="ml-2 hover:bg-gray-100 rounded-full px-2 py-2.5 flex justify-center items-center"
-          >
-            <PaperAirplaneIcon
-              class="transform rotate-90 h-5 w-5 text-blue-500 block ml-1"
-            />
-          </button>
-        </div>
-      </div>
+      <router-view></router-view>
     </div>
   </div>
 </template>
@@ -153,8 +92,8 @@ import {
 } from "@heroicons/vue/solid";
 import { PencilAltIcon, SearchIcon } from "@heroicons/vue/outline";
 import Chat from "../components/Chat.vue";
-import {useRouter} from 'vue-router';
-import { ref } from '@vue/reactivity';
+import { useRouter } from "vue-router";
+import { reactive, ref, watch } from "vue";
 
 export default {
   components: {
@@ -168,25 +107,71 @@ export default {
   },
   setup() {
     const token = localStorage.getItem("token");
+    const user = localStorage.getItem("id");
     const router = useRouter();
     const menu = ref(false);
 
-    const logout = async () => {
-      localStorage.removeItem('token');
-      await router.push('login');
-    }
+    const chats = ref([]);
 
-    if(!token) {
-      router.push('/login')
+    const username = ref("");
+
+    const getChats = async () => {
+      const res = await fetch(
+        `http://localhost:4000/api/chats/user/${user}?username=${username.value
+          .trim()
+          .replaceAll("\\s{1,}", "+")}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Access-Token": token,
+          },
+        }
+      );
+      const data = await res.json();
+
+      chats.value = data;
+      console.log(chats.value);
+    };
+
+    getChats();
+
+    const logout = async () => {
+      localStorage.removeItem("token");
+      await router.push("login");
+    };
+
+    if (!token) {
+      router.push("/login");
     }
-    console.log(token)
+    console.log(token);
+
+    const getUsername = (chat) => {
+      if (chat.users.length > 2) {
+        let name = "";
+        for (let i = 0; i < chat.users.length; i++) {
+          if (chat.users[i].id !== user) {
+            name += chat.users[i].name.split()[0];
+          }
+        }
+        return name;
+      } else {
+        for (let i = 0; i < chat.users.length; i++) {
+          if (chat.users[i]._id !== user) {
+            return chat.users[i].name;
+          }
+        }
+      }
+    };
 
     return {
       menu,
       logout,
-    }
-  }
-
- 
+      getChats,
+      user,
+      chats,
+      getUsername,
+    };
+  },
 };
 </script>

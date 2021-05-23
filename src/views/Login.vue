@@ -134,14 +134,16 @@ export default {
         }
 
         localStorage.setItem("token", data.body.token);
-        await router.push('/t');
+        console.log(data.body);
+        localStorage.setItem("id", data.body.user.id);
+        await router.push("/t");
       } catch (error) {}
     };
 
     return {
       form,
       errorBag,
-      submit
+      submit,
     };
   },
 };
