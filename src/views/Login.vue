@@ -62,12 +62,12 @@
 
               <div class="flex items-center justify-end">
                 <div class="text-sm">
-                  <a
-                    href="#"
+                  <router-link
+                    to="/signup"
                     class="font-medium text-blue-600 hover:text-blue-500"
                   >
                     Crear una cuenta
-                  </a>
+                  </router-link>
                 </div>
               </div>
 
@@ -134,8 +134,10 @@ export default {
         }
 
         localStorage.setItem("token", data.body.token);
-        console.log(data.body);
         localStorage.setItem("id", data.body.user.id);
+        localStorage.setItem("name", data.body.user.name);
+        console.log(data.body.user);
+        localStorage.setItem("initials", data.body.user.initials);
         await router.push("/t");
       } catch (error) {}
     };

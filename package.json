@@ -9,7 +9,10 @@
   "dependencies": {
     "@heroicons/vue": "^1.0.1",
     "axios": "^0.21.1",
+    "moment": "^2.29.1",
+    "socket.io-client": "^4.1.2",
     "vue": "^3.0.5",
+    "vue-native-websocket": "^2.0.14",
     "vue-router": "^4.0.6",
     "vuex": "^4.0.0"
   },

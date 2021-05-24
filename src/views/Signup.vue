@@ -95,18 +95,16 @@
                 </div>
               </div>
 
-              <p class="text-red-500" v-text="errorBag.error">
-
-              </p>
+              <p class="text-red-500" v-text="errorBag.error"></p>
 
               <div class="flex items-center justify-start">
                 <div class="text-sm">
-                  <a
-                    href="#"
+                  <router-link
+                    to="/login"
                     class="font-medium text-blue-600 hover:text-blue-500"
                   >
                     ¿Ya tienes una cuenta?
-                  </a>
+                  </router-link>
                 </div>
               </div>
 
@@ -142,8 +140,8 @@ export default {
     const router = useRouter();
     const token = localStorage.getItem("token");
 
-    if(token) {
-      router.push('/t')
+    if (token) {
+      router.push("/t");
     }
 
     const form = reactive({
@@ -156,14 +154,12 @@ export default {
       name: "",
       email: "",
       password: "",
-      error: ""
+      error: "",
     });
 
     const passwordVerify = ref("");
 
-    watch(form, (newValue, oldValue) => {
-      console.log(newValue);
-    });
+    watch(form, (newValue, oldValue) => {});
 
     const submit = async () => {
       try {
@@ -172,28 +168,28 @@ export default {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(form),
         });
-        
+
         const data = await res.json();
 
         if (data.error) {
-          console.log(data.error);
-          errorBag.error = 'Error en el registro';
+          errorBag.error = "Error en el registro";
           return;
         }
 
-        localStorage.setItem('token', data.body.token);
+        localStorage.setItem("token", data.body.token);
+        localStorage.setItem("id", data.body.user.id);
+        localStorage.setItem("name", data.body.user.name);
+        localStorage.setItem("initials", data.body.user.initials);
 
-        await router.push('/t');
-      } catch (error) {
-        console.log(error);
-      }
+        await router.push("/t");
+      } catch (error) {}
     };
 
     return {
       form,
       submit,
       passwordVerify,
-      errorBag
+      errorBag,
     };
   },
 };

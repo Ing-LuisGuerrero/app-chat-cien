@@ -2,13 +2,13 @@
   <div
     class="w-full h-16 border-b border-gray-300 flex items-center pl-3 pr-4 py-2"
   >
-    <img
-      class="flex-grow-0 flex-shrink-0 rounded-full h-10 w-10 object-cover"
-      src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-    />
+    <div
+      class="border shadow bg-gray-100 flex-grow-0 flex-shrink-0 rounded-full h-10 w-10 flex justify-center items-center"
+    >
+      <span>{{ initials }}</span>
+    </div>
     <div class="ml-3 flex-1 h-full flex flex-col justify-center">
       <p class="text-base font-bold">{{ chatName }}</p>
-      <p class="text-xs text-gray-500">Activo hace 38 min</p>
     </div>
     <!-- Actions -->
     <div class="flex-shrink-0 flex-grow-0">
@@ -17,15 +17,16 @@
       </button>
     </div>
   </div>
-  <div class="flex-1 flex flex-col min-h-0 mt-3">
+  <div class="flex-1 flex flex-col min-h-0 mt-3 w-full">
     <ul
-      class="flex-1 h-full flex flex-col-reverse pl-1 pr-6 pb-1 overflow-scroll"
+      class="flex-1 h-full flex w-full overflow-hidden flex-col-reverse pl-1 pr-6 pb-1 overflow-y-auto"
     >
       <!-- Display messages here -->
       <Message
         v-for="message in messages"
         :message="message"
         :didISendIt="didISendIt(message)"
+        :initials="initials"
       />
     </ul>
     <div class="flex items-center h-min py-2 px-3 w-full flex-shrink-0">
@@ -65,6 +66,8 @@ import {
 import { useRoute } from "vue-router";
 import { ref, reactive } from "@vue/reactivity";
 import Message from "../components/Message.vue";
+import io from "socket.io-client";
+import { onMounted } from "@vue/runtime-core";
 
 export default {
   components: {
@@ -74,7 +77,8 @@ export default {
     Message,
   },
 
-  setup(props) {
+  setup() {
+    const socket = io("http://localhost:4000");
     const router = useRoute();
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("id");
@@ -82,6 +86,7 @@ export default {
     const chat = reactive({});
     const messages = ref([]);
     const chatName = ref("");
+    const initials = ref("");
     const newMessage = reactive({
       message: "",
       user,
@@ -101,6 +106,7 @@ export default {
 
       chat.value = data;
       chatName.value = getChatName(chat.value);
+      initials.value = getInitials(chatName.value);
       newMessage.chat = chat.value._id;
     };
 
@@ -119,14 +125,31 @@ export default {
       const data = await res.json();
 
       messages.value = data;
+
+      socket.on("message", (data) => {
+        messages.value.unshift(data);
+      });
     };
 
     getChat();
     getMessages();
 
     const didISendIt = (message) => {
-      console.log(message);
       return message.user === user;
+    };
+
+    const getInitials = (name) => {
+      name = name.split(/\s+/);
+      const initials = "";
+      if (name.length > 1) {
+        return name[0][0] + name[1][0];
+      } else {
+        if (name.length > 1) {
+          return name[0][0] + name[0][1];
+        } else {
+          return name[0];
+        }
+      }
     };
 
     const getChatName = (chat) => {
@@ -148,7 +171,6 @@ export default {
     };
 
     const sendMessage = async () => {
-      console.log(newMessage);
       const res = await fetch(`http://localhost:4000/api/messages/`, {
         method: "POST",
         headers: {
@@ -160,7 +182,7 @@ export default {
 
       const data = await res.json();
       const response = data;
-      console.log(response);
+      newMessage.message = "";
     };
 
     return {
@@ -170,6 +192,7 @@ export default {
       messages,
       newMessage,
       sendMessage,
+      initials,
     };
   },
 };

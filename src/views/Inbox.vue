@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex bg-white h-screen w-screen w-screen min-w-[300px] overflow-hidden"
+    class="flex bg-white h-screen max-w-screen min-w-[300px] overflow-hidden"
   >
     <div class="w-24 lg:w-96 h-screen border-r border-gray-300 h-full">
       <div class="flex flex-col h-full">
@@ -8,10 +8,11 @@
           class="flex w-full h-auto items-center p-4 justify-center lg:justify-between"
         >
           <div class="flex justify-center lg-justify-start items-center">
-            <img
-              class="flex-grow-0 rounded-full h-10 w-10 object-cover"
-              src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1868&q=80"
-            />
+            <div
+              class="border bg-gray-100 shadow flex-grow-0 rounded-full h-10 w-10 flex justify-center items-center"
+            >
+              <span>{{ initials }}</span>
+            </div>
             <h2
               class="hidden mb-1 lg:block flex-grow overflow-hidden ml-3 text-2xl font-bold"
             >
@@ -48,22 +49,61 @@
         </div>
         <div class="p-4 shadow-sm">
           <form>
-            <div class="mt-1 relative rounded-md shadow-sm"></div>
-            <label
-              class="relative flex bg-gray-100 mt-1 relative rounded-lg shadow-sm"
-            >
-              <div
-                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+            <div class="mt-1 relative rounded-md shadow-sm">
+              <label
+                class="relative flex bg-gray-100 mt-1 relative rounded-lg shadow-sm"
               >
-                <!-- Heroicon name: solid/mail -->
-                <SearchIcon class="h-5 w-5 text-gray-400" />
+                <div
+                  class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                >
+                  <!-- Heroicon name: solid/mail -->
+                  <SearchIcon class="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  v-model="search"
+                  type="text"
+                  class="pl-10 w-full h-full rounded-lg bg-transparent border-none"
+                  placeholder="Search in chats"
+                />
+              </label>
+              <div
+                v-if="users.length > 0"
+                class="absolute border rounded-lg mt-1 w-[351px] bg-white max-h-[300px] overflow-y-auto p-2"
+              >
+                <ul>
+                  <li v-for="u in users">
+                    <button
+                      @click.prevent="createChat(u._id)"
+                      class="w-full shadow-none ring-0 focus:outline-none"
+                    >
+                      <div
+                        class="flex hover:bg-gray-100 w-full rounded-lg cursor-pointer lg:px-3 py-2 justify-center lg:justify-start"
+                      >
+                        <div>
+                          <div
+                            class="shadow border bg-gray-100 flex-shrink-0 rounded-full h-10 w-10 object-cover flex justify-center items-center"
+                          >
+                            <span>{{ u.initials }}</span>
+                          </div>
+                        </div>
+                        <div
+                          class="flex flex-col ml-3 justify-center flex-grow"
+                        >
+                          <p class="block text-sm text-gray-900 text-left">
+                            {{ u.name }}
+                          </p>
+                          <p
+                            class="flex items-center mt-0.5 block text-xs text-gray-500"
+                          >
+                            {{ u.email }}
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                </ul>
               </div>
-              <input
-                type="text"
-                class="pl-10 w-full h-full rounded-lg bg-transparent border-none"
-                placeholder="Search in chats"
-              />
-            </label>
+            </div>
           </form>
         </div>
         <div class="overflow-hidden h-full">
@@ -72,13 +112,16 @@
               v-for="chat in chats"
               :username="getUsername(chat)"
               :id="chat._id"
+              :message="chat.lastMessage.message"
+              :who="who(chat.lastMessage.user)"
+              :when="chat.updatedAt"
             />
           </ul>
         </div>
       </div>
     </div>
     <div class="flex-1 flex flex-col w-full h-screen">
-      <router-view></router-view>
+      <router-view :key="$route.name + ($route.params.id || '')"></router-view>
     </div>
   </div>
 </template>
@@ -94,6 +137,7 @@ import { PencilAltIcon, SearchIcon } from "@heroicons/vue/outline";
 import Chat from "../components/Chat.vue";
 import { useRouter } from "vue-router";
 import { reactive, ref, watch } from "vue";
+import io from "socket.io-client";
 
 export default {
   components: {
@@ -106,14 +150,31 @@ export default {
     PaperAirplaneIcon,
   },
   setup() {
+    const router = useRouter();
+    const socket = io("http://localhost:4000");
     const token = localStorage.getItem("token");
     const user = localStorage.getItem("id");
-    const router = useRouter();
-    const menu = ref(false);
+    const initials = localStorage.getItem("initials");
 
+    if (!token) {
+      router.push("/login");
+      return {
+        users: [],
+      };
+    }
+
+    const nameofuser = localStorage.getItem("name");
+    const menu = ref(false);
+    const search = ref("");
+    const users = ref([]);
     const chats = ref([]);
 
     const username = ref("");
+
+    const newChat = reactive({
+      users: [user],
+      createdBy: user,
+    });
 
     const getChats = async () => {
       const res = await fetch(
@@ -131,30 +192,36 @@ export default {
       const data = await res.json();
 
       chats.value = data;
-      console.log(chats.value);
+
+      socket.on("newChat", (data) => {
+        console.log(getUsername(data));
+        for (let i = 0; i < chats.value.length; i++) {
+          if (chats.value[i]._id === data._id) {
+            chats.value.splice(i, 1);
+          }
+        }
+        chats.value.unshift(data);
+      });
     };
 
     getChats();
 
     const logout = async () => {
-      localStorage.removeItem("token");
+      await router.push("/t");
       await router.push("login");
+      localStorage.removeItem("token");
+      localStorage.removeItem("id");
     };
-
-    if (!token) {
-      router.push("/login");
-    }
-    console.log(token);
 
     const getUsername = (chat) => {
       if (chat.users.length > 2) {
-        let name = "";
+        let name = [];
         for (let i = 0; i < chat.users.length; i++) {
-          if (chat.users[i].id !== user) {
-            name += chat.users[i].name.split()[0];
+          if (chat.users[i]._id !== user) {
+            name.push(chat.users[i].name.split(/\s/)[0]);
           }
         }
-        return name;
+        return name.join(", ");
       } else {
         for (let i = 0; i < chat.users.length; i++) {
           if (chat.users[i]._id !== user) {
@@ -164,6 +231,51 @@ export default {
       }
     };
 
+    const who = (userDB) => {
+      console.log(userDB);
+      if (userDB._id === user) return "Tu: ";
+      const name = userDB.name.split(/\s/)[0];
+      return `${name}: `;
+    };
+
+    const searchUsers = async () => {
+      const res = await fetch(
+        `http://localhost:4000/api/user?user=${search.value
+          .trim()
+          .replaceAll("\\s{1,}", "+")}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Access-Token": token,
+          },
+        }
+      );
+      const data = await res.json();
+      users.value = data;
+    };
+
+    const createChat = async (id) => {
+      search.value = "";
+      newChat.users.push(id);
+      const res = await fetch("http://localhost:4000/api/chats", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Access-Token": token,
+        },
+        body: JSON.stringify(newChat),
+      });
+
+      const data = await res.json();
+      newChat.users = [user];
+      await router.push({ name: "Chat", params: { id: data._id } });
+    };
+
+    watch(search, (newValue, oldValue) => {
+      searchUsers();
+    });
+
     return {
       menu,
       logout,
@@ -171,6 +283,11 @@ export default {
       user,
       chats,
       getUsername,
+      search,
+      users,
+      createChat,
+      who,
+      initials,
     };
   },
 };

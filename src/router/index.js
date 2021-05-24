@@ -7,6 +7,10 @@ import NewChat from "../views/NewChat.vue";
 
 const routes = [
   {
+    path: "/",
+    redirect: { name: "Login" },
+  },
+  {
     path: "/login",
     name: "Login",
     component: Login,
